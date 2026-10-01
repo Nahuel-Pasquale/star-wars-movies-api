@@ -9,12 +9,16 @@ import { CreateMovieDto } from './dto/create-movie.dto.js';
 import { UpdateMovieDto } from './dto/update-movie.dto.js';
 import { Movie } from './entities/movie.entity.js';
 import { MovieSource } from './enums/movie-source.enum.js';
+import { SwapiClient } from '../../integrations/swapi/swapi.client.js';
+import { SwapiMapper } from '../../integrations/swapi/swapi.mapper.js';
 
 @Injectable()
 export class MoviesService {
   constructor(
     @InjectRepository(Movie)
     private readonly moviesRepository: Repository<Movie>,
+    private readonly swapiClient: SwapiClient,
+    private readonly swapiMapper: SwapiMapper,
   ) {}
 
   findAll(): Promise<Movie[]> {
@@ -103,5 +107,49 @@ export class MoviesService {
     const movie = await this.findOne(id);
 
     await this.moviesRepository.remove(movie);
+  }
+
+  async syncFromSwapi() {
+    const films = await this.swapiClient.getFilms();
+
+    let created = 0;
+    let updated = 0;
+
+    for (const film of films) {
+      const data = this.swapiMapper.toMovieData(film);
+
+      const existingMovie = await this.moviesRepository.findOne({
+          where: {
+            swapiId: data.swapiId,
+          },
+        });
+
+      if (existingMovie) {
+        this.moviesRepository.merge(
+          existingMovie,
+          data,
+        );
+
+        await this.moviesRepository.save(
+          existingMovie,
+        );
+
+        updated++;
+
+        continue;
+      }
+
+      const movie = this.moviesRepository.create(data);
+
+      await this.moviesRepository.save(movie);
+
+      created++;
+    }
+
+    return {
+      synced: films.length,
+      created,
+      updated,
+    };
   }
 }

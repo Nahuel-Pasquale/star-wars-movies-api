@@ -89,4 +89,15 @@ export class MoviesController {
   ): Promise<void> {
     await this.moviesService.remove(id);
   }
+
+  @UseGuards(
+    JwtAuthGuard,
+    RolesGuard,
+  )
+  @Roles(UserRole.ADMIN)
+  @HttpCode(HttpStatus.OK)
+  @Post('sync')
+  syncFromSwapi() {
+    return this.moviesService.syncFromSwapi();
+  }
 }
