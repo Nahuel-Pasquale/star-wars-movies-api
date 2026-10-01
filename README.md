@@ -284,7 +284,7 @@ npm run start:dev
 The API will be available at:
 
 ```text
-http://localhost:3000/api
+http://localhost:3000/api/v1
 ```
 
 Swagger documentation:
@@ -293,7 +293,23 @@ Swagger documentation:
 http://localhost:3000/docs
 ```
 
----
+## Health Check
+
+The application exposes a health endpoint:
+
+```http
+GET /api/health
+```
+
+## Live Deployment
+
+The API is deployed on Render.
+
+### Base URL
+
+```text
+https://star-wars-movies-api-l4yb.onrender.com
+```
 
 ## API Documentation
 
@@ -301,6 +317,9 @@ Swagger / OpenAPI documentation is available at:
 
 ```text
 http://localhost:3000/docs
+```
+```text
+https://star-wars-movies-api-l4yb.onrender.com/docs
 ```
 
 Protected endpoints support Bearer authentication directly from Swagger.
@@ -349,14 +368,14 @@ Role validation
 
 | Endpoint | Public | USER | ADMIN |
 | --- | --- | --- | --- |
-| POST `/api/auth/signup` | Yes | Yes | Yes |
-| POST `/api/auth/login` | Yes | Yes | Yes |
-| GET `/api/movies` | Yes | Yes | Yes |
-| GET `/api/movies/:id` | No | Yes | No |
-| POST `/api/movies` | No | No | Yes |
-| PATCH `/api/movies/:id` | No | No | Yes |
-| DELETE `/api/movies/:id` | No | No | Yes |
-| POST `/api/movies/sync` | No | No | Yes |
+| POST `/api/v1/auth/signup` | Yes | Yes | Yes |
+| POST `/api/v1/auth/login` | Yes | Yes | Yes |
+| GET `/api/v1/movies` | Yes | Yes | Yes |
+| GET `/api/v1/movies/:id` | No | Yes | No |
+| POST `/api/v1/movies` | No | No | Yes |
+| PATCH `/api/v1/movies/:id` | No | No | Yes |
+| DELETE `/api/v1/movies/:id` | No | No | Yes |
+| POST `/api/v1/movies/sync` | No | No | Yes |
 
 The movie detail endpoint intentionally allows only regular users because that behavior follows the challenge specification literally.
 
@@ -367,19 +386,19 @@ The movie detail endpoint intentionally allows only regular users because that b
 ### Authentication
 
 ```text
-POST /api/auth/signup
-POST /api/auth/login
+POST /api/v1/auth/signup
+POST /api/v1/auth/login
 ```
 
 ### Movies
 
 ```text
-GET    /api/movies
-GET    /api/movies/:id
-POST   /api/movies
-PATCH  /api/movies/:id
-DELETE /api/movies/:id
-POST   /api/movies/sync
+GET    /api/v1/movies
+GET    /api/v1/movies/:id
+POST   /api/v1/movies
+PATCH  /api/v1/movies/:id
+DELETE /api/v1/movies/:id
+POST   /api/v1/movies/sync
 ```
 
 ---
@@ -395,7 +414,7 @@ https://www.swapi.tech
 Endpoint:
 
 ```text
-POST /api/movies/sync
+POST /api/v1/movies/sync
 ```
 
 Required role:
@@ -550,6 +569,15 @@ Lines:      96%+
 Coverage is focused on business logic and security-critical behavior instead of artificially testing framework metadata.
 
 ---
+
+```md
+## Dependency Security
+
+The project currently reports:
+
+```text
+0 vulnerabilities
+```
 
 ## Design Decisions
 
