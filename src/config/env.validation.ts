@@ -17,4 +17,12 @@ export const envValidationSchema = Joi.object({
   JWT_EXPIRES_IN: Joi.string().default('15m'),
 
   SWAPI_BASE_URL: Joi.string().uri().required(),
+
+  ADMIN_EMAIL: Joi.string()
+    .email()
+    .optional(),
+
+  ADMIN_PASSWORD: Joi.string()
+    .min(8)
+    .optional(),
 });

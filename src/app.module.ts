@@ -6,6 +6,7 @@ import { envValidationSchema } from './config/env.validation.js';
 import { DatabaseModule } from './database/database.module.js';
 import { UsersModule } from './features/users/users.module.js';
 import { AuthModule } from './features/auth/auth.module.js';
+import { MoviesModule } from './features/movies/movies.module.js';
 
 @Module({
   imports: [
@@ -17,7 +18,8 @@ import { AuthModule } from './features/auth/auth.module.js';
 
     DatabaseModule,
     UsersModule,
-    AuthModule
+    AuthModule,
+    MoviesModule
   ],
 })
 export class AppModule {}
