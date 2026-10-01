@@ -12,9 +12,9 @@ export class SwapiMapper {
       swapiId: film.uid,
       title: film.properties.title.trim(),
       episodeId: film.properties.episode_id,
-      openingCrawl: film.properties.opening_crawl,
-      director: film.properties.director,
-      producer: film.properties.producer,
+      openingCrawl: film.properties.opening_crawl.trim(),
+      director: film.properties.director.trim(),
+      producer: film.properties.producer.trim(),
       releaseDate: film.properties.release_date,
       source: MovieSource.SWAPI,
     };

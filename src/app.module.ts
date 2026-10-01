@@ -12,6 +12,7 @@ import {
   ThrottlerModule,
 } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { HealthModule } from './features/health/health.module.js';
 
 @Module({
   imports: [
@@ -27,7 +28,8 @@ import { APP_GUARD } from '@nestjs/core';
     DatabaseModule,
     UsersModule,
     AuthModule,
-    MoviesModule
+    MoviesModule,
+    HealthModule
   ],
   providers: [
     {

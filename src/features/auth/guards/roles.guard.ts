@@ -5,12 +5,12 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { Request } from 'express';
 
 import { UserRole } from '../../users/enums/user-role.enum.js';
 import {
   ROLES_KEY,
 } from '../decorators/roles.decorator.js';
-import { AuthenticatedUser } from '../types/authenticated-user.type.js';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -30,27 +30,23 @@ export class RolesGuard implements CanActivate {
         ],
       );
 
-    if (!requiredRoles) {
+    if (!requiredRoles?.length) {
       return true;
     }
 
     const request = context
       .switchToHttp()
-      .getRequest();
+      .getRequest<Request>();
 
-    const user =
-      request.user as
-        | AuthenticatedUser
-        | undefined;
+    const user = request.user;
 
     if (!user) {
-      return false;
+      throw new ForbiddenException(
+        'Authenticated user not found',
+      );
     }
 
-    const hasRole =
-      requiredRoles.includes(user.role);
-
-    if (!hasRole) {
+    if (!requiredRoles.includes(user.role)) {
       throw new ForbiddenException(
         'You do not have permission to access this resource',
       );

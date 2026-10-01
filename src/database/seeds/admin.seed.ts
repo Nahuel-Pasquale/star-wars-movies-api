@@ -28,10 +28,6 @@ async function seedAdmin() {
       });
 
     if (existingAdmin) {
-      console.log(
-        `Admin ${email} already exists`,
-      );
-
       return;
     }
 
@@ -47,10 +43,6 @@ async function seedAdmin() {
       });
 
     await usersRepository.save(admin);
-
-    console.log(
-      `Admin ${email} created successfully`,
-    );
   } finally {
     await AppDataSource.destroy();
   }

@@ -13,14 +13,6 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const port = configService.getOrThrow<number>('app.port');
   await app.listen(port);
-
-  console.log(
-    `API running on http://localhost:${port}/api`,
-  );
-
-  console.log(
-    `Swagger available on http://localhost:${port}/docs`,
-  );
 }
 
 void bootstrap();
