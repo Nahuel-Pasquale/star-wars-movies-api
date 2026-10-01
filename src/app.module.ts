@@ -7,6 +7,11 @@ import { DatabaseModule } from './database/database.module.js';
 import { UsersModule } from './features/users/users.module.js';
 import { AuthModule } from './features/auth/auth.module.js';
 import { MoviesModule } from './features/movies/movies.module.js';
+import {
+  ThrottlerGuard,
+  ThrottlerModule,
+} from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -15,11 +20,20 @@ import { MoviesModule } from './features/movies/movies.module.js';
       load: [configuration],
       validationSchema: envValidationSchema,
     }),
-
+    ThrottlerModule.forRoot([{
+      ttl: 60_000,
+      limit: 100,
+    }]),
     DatabaseModule,
     UsersModule,
     AuthModule,
     MoviesModule
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}

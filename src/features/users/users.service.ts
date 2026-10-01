@@ -1,6 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+} from '@nestjs/common';
+import {
+  QueryFailedError,
+  Repository,
+} from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 
 import { User } from './entities/user.entity.js';
 import { CreateUserData } from './types/create-user-data.type.js';
@@ -35,7 +41,21 @@ export class UsersService {
     });
   }
 
-  save(user: User): Promise<User> {
-    return this.usersRepository.save(user);
+  async save(user: User): Promise<User> {
+    try {
+      return await this.usersRepository.save(user);
+    } catch (error) {
+      if (
+        error instanceof QueryFailedError &&
+        'code' in error &&
+        error.code === '23505'
+      ) {
+        throw new ConflictException(
+          'Email already registered',
+        );
+      }
+
+      throw error;
+    }
   }
 }
