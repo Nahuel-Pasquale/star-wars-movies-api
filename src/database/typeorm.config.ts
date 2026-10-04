@@ -4,6 +4,12 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 export function getTypeOrmConfig(
   configService: ConfigService,
 ): TypeOrmModuleOptions {
+  
+  const ssl =
+    configService.get<boolean>(
+      'database.ssl',
+    );
+
   return {
     type: 'postgres',
 
@@ -21,6 +27,12 @@ export function getTypeOrmConfig(
 
     password:
       configService.getOrThrow<string>('database.password'),
+
+    ssl: ssl
+      ? {
+          rejectUnauthorized: false,
+        }
+      : false,
 
     autoLoadEntities: true,
 

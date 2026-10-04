@@ -10,6 +10,7 @@ import {
   Patch,
   Post,
   UseGuards,
+  Query
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -27,6 +28,7 @@ import { UserRole } from '../users/enums/user-role.enum.js';
 import { CreateMovieDto } from './dto/create-movie.dto.js';
 import { UpdateMovieDto } from './dto/update-movie.dto.js';
 import { MoviesService } from './movies.service.js';
+import { PaginationQueryDto } from './dto/pagination-query.dto.js';
 
 @ApiTags('Movies')
 @Controller('movies')
@@ -35,18 +37,20 @@ export class MoviesController {
     private readonly moviesService: MoviesService,
   ) {}
 
-  @ApiOperation({
-    summary: 'Get all movies',
-    description:
-      'Returns the complete list of movies stored in the application.',
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Movies retrieved successfully',
-  })
   @Get()
-  findAll() {
-    return this.moviesService.findAll();
+  @ApiOperation({
+    summary: 'List movies',
+    description:
+      'Returns a paginated list of movies.',
+  })
+  findAll(
+    @Query()
+    pagination: PaginationQueryDto,
+  ) {
+    return this.moviesService.findAll(
+      pagination.page,
+      pagination.limit,
+    );
   }
 
   @ApiBearerAuth()

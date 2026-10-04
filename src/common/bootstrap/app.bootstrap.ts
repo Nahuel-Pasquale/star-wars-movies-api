@@ -9,7 +9,7 @@ import { HttpExceptionFilter } from '../filters/http-exception.filter.js';
 export function configureApplication(
   app: INestApplication,
 ): void {
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix('api/v1');
 
   app.use(helmet());
 

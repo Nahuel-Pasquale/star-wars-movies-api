@@ -1,6 +1,4 @@
 import { Injectable } from '@nestjs/common';
-
-import { Movie } from '../../features/movies/entities/movie.entity.js';
 import { MovieSource } from '../../features/movies/enums/movie-source.enum.js';
 import { SwapiFilm } from './dto/swapi-film.dto.js';
 import { MovieSyncData } from '../../features/movies/types/movie-sync-data.type.js';

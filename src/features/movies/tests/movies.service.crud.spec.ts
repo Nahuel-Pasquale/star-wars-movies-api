@@ -6,7 +6,10 @@ import {
   it,
   vi,
 } from 'vitest';
-import { Repository } from 'typeorm';
+import {
+  DataSource,
+  Repository,
+} from 'typeorm';
 
 import { SwapiClient } from '../../../integrations/swapi/swapi.client.js';
 import { SwapiMapper } from '../../../integrations/swapi/swapi.mapper.js';
@@ -19,11 +22,16 @@ describe('MoviesService - CRUD', () => {
 
   const repositoryMock = {
     find: vi.fn(),
+    findAndCount: vi.fn(),
     findOne: vi.fn(),
     create: vi.fn(),
     save: vi.fn(),
     remove: vi.fn(),
     merge: vi.fn(),
+  };
+
+  const dataSourceMock = {
+    transaction: vi.fn(),
   };
 
   const swapiClientMock = {
@@ -39,34 +47,123 @@ describe('MoviesService - CRUD', () => {
 
     service = new MoviesService(
       repositoryMock as unknown as Repository<Movie>,
+      dataSourceMock as unknown as DataSource,
       swapiClientMock as unknown as SwapiClient,
       swapiMapperMock as unknown as SwapiMapper,
     );
   });
 
   describe('findAll', () => {
-    it('should return all movies', async () => {
+    it('should return paginated movies', async () => {
       const movies = [
         {
           id: 'movie-1',
           title: 'A New Hope',
         },
+        {
+          id: 'movie-2',
+          title: 'The Empire Strikes Back',
+        },
       ];
 
-      repositoryMock.find.mockResolvedValue(
+      repositoryMock.findAndCount.mockResolvedValue([
         movies,
-      );
+        6,
+      ]);
 
       const result =
-        await service.findAll();
-
-      expect(result).toEqual(movies);
+        await service.findAll(1, 5);
 
       expect(
-        repositoryMock.find,
+        repositoryMock.findAndCount,
       ).toHaveBeenCalledWith({
+        skip: 0,
+        take: 5,
         order: {
           createdAt: 'DESC',
+        },
+      });
+
+      expect(result).toEqual({
+        data: movies,
+        meta: {
+          page: 1,
+          limit: 5,
+          totalCount: 6,
+          totalPages: 2,
+          hasNextPage: true,
+          hasPreviousPage: false,
+        },
+      });
+    });
+
+    it('should calculate second page correctly', async () => {
+      const movies = [
+        {
+          id: 'movie-6',
+          title: 'Return of the Jedi',
+        },
+      ];
+
+      repositoryMock.findAndCount.mockResolvedValue([
+        movies,
+        6,
+      ]);
+
+      const result =
+        await service.findAll(2, 5);
+
+      expect(
+        repositoryMock.findAndCount,
+      ).toHaveBeenCalledWith({
+        skip: 5,
+        take: 5,
+        order: {
+          createdAt: 'DESC',
+        },
+      });
+
+      expect(result).toEqual({
+        data: movies,
+        meta: {
+          page: 2,
+          limit: 5,
+          totalCount: 6,
+          totalPages: 2,
+          hasNextPage: false,
+          hasPreviousPage: true,
+        },
+      });
+    });
+
+    it('should return empty pagination when there are no movies', async () => {
+      repositoryMock.findAndCount.mockResolvedValue([
+        [],
+        0,
+      ]);
+
+      const result =
+        await service.findAll(1, 5);
+
+      expect(
+        repositoryMock.findAndCount,
+      ).toHaveBeenCalledWith({
+        skip: 0,
+        take: 5,
+        order: {
+          createdAt: 'DESC',
+        },
+      });
+
+      expect(result).toEqual({
+        data: [],
+        meta: {
+          page: 1,
+          limit: 5,
+          totalCount: 0,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPreviousPage: false,
         },
       });
     });

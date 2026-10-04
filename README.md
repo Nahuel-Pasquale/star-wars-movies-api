@@ -6,6 +6,72 @@ This project was developed as a technical challenge focused on backend architect
 
 ---
 
+## Live Demo
+
+The API is deployed and ready to be tested.
+
+### API Base URL
+
+```text
+https://star-wars-movies-api-l4yb.onrender.com
+```
+
+### Swagger Documentation
+
+```text
+https://star-wars-movies-api-l4yb.onrender.com/docs
+```
+
+Swagger is the recommended way to test the application because it exposes all available endpoints and supports JWT Bearer authentication.
+
+### Demo Administrator
+
+A demo administrator account is already created in the deployed environment.
+
+Use the following credentials:
+
+```text
+Email: admin@starwars.dev
+Password: Admin12345!
+```
+
+The administrator account can be used to test protected operations such as:
+
+- creating movies
+- updating movies
+- deleting movies
+- synchronizing movies from SWAPI
+
+### Important: synchronize movies before testing
+
+The deployed database may initially contain no movies.
+
+Before testing the movie listing or movie detail endpoints, authenticate with the demo administrator and execute:
+
+```http
+POST /api/movies/sync
+```
+
+This endpoint imports the Star Wars movies from SWAPI into the application database.
+
+### Recommended Test Flow
+
+1. Open Swagger.
+2. Execute `POST /api/auth/login`.
+3. Login using the demo administrator credentials.
+4. Copy the returned JWT access token.
+5. Click **Authorize** in Swagger.
+6. Provide the JWT token using Bearer authentication.
+7. Execute `POST /api/movies/sync`.
+8. Test `GET /api/movies`.
+9. Test the remaining protected endpoints.
+
+These demo credentials are intentionally public and are intended exclusively for this technical challenge environment.
+
+Infrastructure secrets such as database credentials, JWT secrets and hosting credentials are not stored in the repository.
+
+---
+
 ## Tech Stack
 
 - Node.js
@@ -162,8 +228,6 @@ ADMIN_EMAIL=admin@test.com
 ADMIN_PASSWORD=AdminPassword123
 ```
 
-A `.env.example` file should be included in the repository as reference.
-
 Do not commit real credentials or secrets.
 
 ---
@@ -256,7 +320,7 @@ Public signup always creates a regular user.
 
 Administrator accounts cannot be created by passing a role through the signup endpoint.
 
-Create the configured administrator with:
+For local development, an administrator can be created using the configured environment variables:
 
 ```bash
 npm run seed:admin
@@ -570,7 +634,6 @@ Coverage is focused on business logic and security-critical behavior instead of 
 
 ---
 
-```md
 ## Dependency Security
 
 The project currently reports:
@@ -717,7 +780,6 @@ Possible improvements for a production environment include:
 - transactional synchronization
 - structured logging
 - observability and tracing
-- health checks
 - CI/CD pipeline
 - containerized backend deployment
 - production secret management
