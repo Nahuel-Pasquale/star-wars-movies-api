@@ -28,8 +28,6 @@ Swagger is the recommended way to test the application because it exposes all av
 
 A demo administrator account is already created in the deployed environment.
 
-Use the following credentials:
-
 ```text
 Email: admin@starwars.dev
 Password: Admin12345!
@@ -49,7 +47,7 @@ The deployed database may initially contain no movies.
 Before testing the movie listing or movie detail endpoints, authenticate with the demo administrator and execute:
 
 ```http
-POST /api/movies/sync
+POST /api/v1/movies/sync
 ```
 
 This endpoint imports the Star Wars movies from SWAPI into the application database.
@@ -57,13 +55,13 @@ This endpoint imports the Star Wars movies from SWAPI into the application datab
 ### Recommended Test Flow
 
 1. Open Swagger.
-2. Execute `POST /api/auth/login`.
+2. Execute `POST /api/v1/auth/login`.
 3. Login using the demo administrator credentials.
 4. Copy the returned JWT access token.
 5. Click **Authorize** in Swagger.
 6. Provide the JWT token using Bearer authentication.
-7. Execute `POST /api/movies/sync`.
-8. Test `GET /api/movies`.
+7. Execute `POST /api/v1/movies/sync`.
+8. Test `GET /api/v1/movies?page=1&limit=5`.
 9. Test the remaining protected endpoints.
 
 These demo credentials are intentionally public and are intended exclusively for this technical challenge environment.
@@ -98,7 +96,7 @@ The project follows a **feature-oriented architecture**.
 
 The main responsibilities are separated into:
 
-- `features`: application capabilities such as authentication, users and movies
+- `features`: application capabilities such as authentication, users, movies and health checks
 - `integrations`: external services such as SWAPI
 - `database`: database configuration, migrations and seeds
 - `config`: application configuration and environment validation
@@ -164,15 +162,19 @@ src/
 │   │   ├── users.service.ts
 │   │   └── users.module.ts
 │   │
-│   └── movies/
-│       ├── dto/
-│       ├── entities/
-│       ├── enums/
-│       ├── types/
-│       ├── tests/
-│       ├── movies.controller.ts
-│       ├── movies.service.ts
-│       └── movies.module.ts
+│   ├── movies/
+│   │   ├── dto/
+│   │   ├── entities/
+│   │   ├── enums/
+│   │   ├── types/
+│   │   ├── tests/
+│   │   ├── movies.controller.ts
+│   │   ├── movies.service.ts
+│   │   └── movies.module.ts
+│   │
+│   └── health/
+│       ├── health.controller.ts
+│       └── health.module.ts
 │
 ├── integrations/
 │   └── swapi/
@@ -218,6 +220,7 @@ DATABASE_PORT=5432
 DATABASE_NAME=star_wars_movies
 DATABASE_USER=postgres
 DATABASE_PASSWORD=postgres
+DATABASE_SSL=false
 
 JWT_SECRET=development-secret-change-me
 JWT_EXPIRES_IN=15m
@@ -228,7 +231,7 @@ ADMIN_EMAIL=admin@test.com
 ADMIN_PASSWORD=AdminPassword123
 ```
 
-Do not commit real credentials or secrets.
+> Never commit real credentials or secrets. Production values are configured through Render environment variables.
 
 ---
 
@@ -262,13 +265,9 @@ star-wars-postgres
 
 ## Database
 
-The application uses PostgreSQL running inside Docker.
+The application uses PostgreSQL.
 
-Default local database:
-
-```text
-star_wars_movies
-```
+For local development, PostgreSQL runs inside Docker.
 
 Default local connection:
 
@@ -279,6 +278,8 @@ Database: star_wars_movies
 Username: postgres
 Password: postgres
 ```
+
+The deployed environment uses PostgreSQL hosted on Render. Production database credentials are configured only through environment variables and are not committed to the repository.
 
 ---
 
@@ -316,17 +317,17 @@ This avoids automatic schema changes and keeps database evolution explicit and v
 
 ## Admin Seed
 
-Public signup always creates a regular user.
+Public signup always creates a regular `USER`.
 
 Administrator accounts cannot be created by passing a role through the signup endpoint.
 
-For local development, an administrator can be created using the configured environment variables:
+For local development, an administrator can be created using:
 
 ```bash
 npm run seed:admin
 ```
 
-The seed uses:
+The seed reads:
 
 ```env
 ADMIN_EMAIL
@@ -334,6 +335,8 @@ ADMIN_PASSWORD
 ```
 
 The seed is idempotent and can be executed multiple times safely.
+
+A demo administrator is already created in the deployed environment. Its credentials are listed in the [Live Demo](#live-demo) section.
 
 ---
 
@@ -357,38 +360,39 @@ Swagger documentation:
 http://localhost:3000/docs
 ```
 
+---
+
 ## Health Check
 
-The application exposes a health endpoint:
+The application exposes a lightweight liveness endpoint:
 
 ```http
-GET /api/health
+GET /api/v1/health
 ```
 
-## Live Deployment
+The endpoint verifies that the API process is running and able to receive HTTP requests.
 
-The API is deployed on Render.
+It intentionally does not depend on PostgreSQL or SWAPI, which makes it suitable for infrastructure health monitoring.
 
-### Base URL
-
-```text
-https://star-wars-movies-api-l4yb.onrender.com
-```
+---
 
 ## API Documentation
 
-Swagger / OpenAPI documentation is available at:
+Swagger / OpenAPI documentation is available locally at:
 
 ```text
 http://localhost:3000/docs
 ```
+
+and in the deployed environment at:
+
 ```text
 https://star-wars-movies-api-l4yb.onrender.com/docs
 ```
 
 Protected endpoints support Bearer authentication directly from Swagger.
 
-Use the **Authorize** button and provide a valid JWT token.
+Use the **Authorize** button and provide a valid JWT access token.
 
 ---
 
@@ -440,6 +444,7 @@ Role validation
 | PATCH `/api/v1/movies/:id` | No | No | Yes |
 | DELETE `/api/v1/movies/:id` | No | No | Yes |
 | POST `/api/v1/movies/sync` | No | No | Yes |
+| GET `/api/v1/health` | Yes | Yes | Yes |
 
 The movie detail endpoint intentionally allows only regular users because that behavior follows the challenge specification literally.
 
@@ -457,13 +462,80 @@ POST /api/v1/auth/login
 ### Movies
 
 ```text
-GET    /api/v1/movies
-GET    /api/v1/movies/:id
-POST   /api/v1/movies
-PATCH  /api/v1/movies/:id
+GET    /api/movies
+GET    /api/movies/:id
+POST   /api/movies
+PATCH  /api/movies/:id
 DELETE /api/v1/movies/:id
-POST   /api/v1/movies/sync
+POST   /api/movies/sync
 ```
+
+### Health
+
+```text
+GET /api/v1/health
+```
+
+---
+
+## Movie Pagination
+
+`GET /api/v1/movies` returns a paginated response.
+
+Default values:
+
+```text
+page=1
+limit=5
+```
+
+Example request:
+
+```http
+GET /api/v1/movies?page=1&limit=5
+```
+
+Example response:
+
+```json
+{
+  "data": [
+    {
+      "id": "movie-uuid",
+      "title": "A New Hope"
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 5,
+    "totalCount": 6,
+    "totalPages": 2,
+    "hasNextPage": true,
+    "hasPreviousPage": false
+  }
+}
+```
+
+If no movies exist yet:
+
+```json
+{
+  "data": [],
+  "meta": {
+    "page": 1,
+    "limit": 5,
+    "totalCount": 0,
+    "totalPages": 0,
+    "hasNextPage": false,
+    "hasPreviousPage": false
+  }
+}
+```
+
+Query parameters are validated:
+
+- `page` must be an integer greater than or equal to `1`
+- `limit` must be an integer between `1` and `100`
 
 ---
 
@@ -502,6 +574,20 @@ Example response:
 }
 ```
 
+### Transactional Synchronization
+
+The external SWAPI request and mapping are completed before opening the database transaction.
+
+Inside the transaction, existing SWAPI movies are loaded in a single query and indexed in memory by `swapiId`. New or changed records are then persisted as a batch.
+
+If any database operation fails while synchronizing the catalog, the transaction is rolled back and no partial synchronization is persisted.
+
+Repeated synchronization is idempotent:
+
+- missing movies are created
+- changed movies are updated
+- unchanged movies are left untouched
+
 The SWAPI integration is isolated through:
 
 ```text
@@ -522,11 +608,9 @@ This prevents external API models from leaking directly into the application dom
 
 The API returns consistent HTTP status codes.
 
-Examples:
-
 ```text
 400 Bad Request
-Invalid input or malformed UUID
+Invalid input, invalid pagination parameters or malformed UUID
 
 401 Unauthorized
 Missing, invalid or expired authentication token
@@ -576,6 +660,8 @@ Implemented security measures include:
 - request payload whitelist
 - rejection of unknown properties
 - external API timeout handling
+- production secrets kept outside the repository
+- dependency audit with `0 vulnerabilities`
 
 ---
 
@@ -595,9 +681,12 @@ Covered areas include:
 - user persistence behavior
 - movie CRUD logic
 - movie not-found behavior
+- movie pagination behavior
+- empty paginated results
 - SWAPI synchronization
+- transactional synchronization behavior
+- create / update / unchanged synchronization cases
 - duplicate prevention during synchronization
-- unchanged / updated synchronization behavior
 - SWAPI mapping
 - SWAPI timeout and error handling
 
@@ -642,6 +731,16 @@ The project currently reports:
 0 vulnerabilities
 ```
 
+Run:
+
+```bash
+npm audit
+```
+
+to verify the dependency tree.
+
+---
+
 ## Design Decisions
 
 ### Feature-Oriented Architecture
@@ -682,11 +781,29 @@ Roles are explicitly checked instead of implementing implicit role inheritance.
 
 This allows the API to follow the challenge requirement where movie details are restricted specifically to regular users.
 
-### Idempotent Synchronization
+### Idempotent and Transactional Synchronization
 
 SWAPI movies use their external identifier as a unique key.
 
-Repeated synchronization therefore creates, updates or leaves records unchanged instead of generating duplicates.
+The synchronization process:
+
+1. fetches and maps the external data before opening the transaction
+2. loads existing SWAPI movies in a single database query
+3. compares existing and incoming data in memory
+4. persists only new or changed movies
+5. commits all database changes together
+
+If persistence fails, the transaction is rolled back.
+
+This avoids duplicate records, unnecessary updates and partially synchronized data.
+
+### Paginated Movie Listing
+
+Movie listing uses database-level pagination with TypeORM `findAndCount()`.
+
+The API returns the current page data together with pagination metadata such as total records, total pages and next/previous-page availability.
+
+The default page size is `5` to make pagination behavior visible in the demo environment.
 
 ### Database-Level Uniqueness
 
@@ -723,7 +840,7 @@ npm run migration:generate -- src/database/migrations/MigrationName
 # Revert migration
 npm run migration:revert
 
-# Create / ensure ADMIN user
+# Create / ensure ADMIN user locally
 npm run seed:admin
 
 # Start development server
@@ -737,6 +854,9 @@ npm run test:watch
 
 # Run coverage
 npm run test:cov
+
+# Dependency security audit
+npm audit
 ```
 
 ---
@@ -747,13 +867,9 @@ A clean local setup can be started with:
 
 ```bash
 npm install
-
 docker compose up -d
-
 npm run migration:run
-
 npm run seed:admin
-
 npm run start:dev
 ```
 
@@ -764,7 +880,10 @@ Swagger:
 http://localhost:3000/docs
 
 API:
-http://localhost:3000/api
+http://localhost:3000/api/v1
+
+Health:
+http://localhost:3000/api/v1/health
 ```
 
 ---
@@ -775,14 +894,15 @@ Possible improvements for a production environment include:
 
 - refresh token flow
 - token revocation strategy
-- Redis-backed rate limiting
+- Redis-backed distributed rate limiting
 - caching
-- transactional synchronization
 - structured logging
 - observability and tracing
-- CI/CD pipeline
-- containerized backend deployment
-- production secret management
+- separate liveness and readiness probes
+- CI/CD pipeline with automated quality gates
+- automated migration strategy for production deployments
+- integration / E2E tests
+- secret rotation and centralized secret management
 
 ---
 
